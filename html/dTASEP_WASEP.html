@@ -1,0 +1,246 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>dTASEP_WASEP</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-08-29"><meta name="DC.source" content="dTASEP_WASEP.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1></h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">dTASEP-WASEP</a></li><li><a href="#2">Define physical and numerical parameters.</a></li><li><a href="#3">Model parameters.</a></li><li><a href="#4">Check stability of numerical scheme</a></li><li><a href="#5">Set up workspace variables and initial/boundary conditions</a></li><li><a href="#8">Solve the diffusion equation for `u`.</a></li><li><a href="#9">Inverse Cole-Hopf transformation</a></li></ul></div><h2 id="1">dTASEP-WASEP</h2><p>In these notes we integrate the mean-field hydronamics limit of a weakly asymmetric simple exclusion process dTASEP-WASEP with position-dependent rates.</p><h2 id="2">Define physical and numerical parameters.</h2><pre class="codeinput">X=150;
+deltat=0.002;
+deltax=0.05;
+T=1000;
+</pre><h2 id="3">Model parameters.</h2><pre class="codeinput">rate_profile = [repelem(0.9048, 25),exp(0.1*sin(linspace(-pi/2,-pi/2 + 6 * pi,100))), repelem(0.9048, 25)] - 0.1; <span class="comment">%linspace(3,4,150)</span>
+<span class="comment">% rate_profile = cumsum([repelem(0.9048, 25),exp(sin(linspace(-pi/2,-pi/2 + 6 * pi,100))), repelem(0.9048, 25)]) * 0.01 +3;</span>
+figure(10)
+plot(rate_profile)
+title(<span class="string">'rate profile'</span>)
+xlabel(<span class="string">'$x$'</span>, <span class="string">'Interpreter'</span>,<span class="string">'latex'</span>)
+
+
+D = 0.5 * rate_profile;
+<span class="comment">% D = repelem(1, 150);</span>
+</pre><img vspace="5" hspace="5" src="dTASEP_WASEP_01.png" alt=""> <h2 id="4">Check stability of numerical scheme</h2><p>The numerical scheme we are going to use is stable everywhere in the bulk if `max(D(x))*deltat/deltax^2` is less than <img src="dTASEP_WASEP_eq08832713359046861517.png" alt="$0.5$" style="width:18px;height:10px;">.</p><pre class="codeinput">fprintf(<span class="string">"%f\n"</span>, max(D(2:(X-1)))*deltat/deltax^2);
+</pre><pre class="codeoutput">0.401868
+</pre><h2 id="5">Set up workspace variables and initial/boundary conditions</h2><pre class="codeinput">u = zeros(T,X);
+J = zeros(T,X-2);
+rho0 = [repelem(1,50), repelem(0,100)]; <span class="comment">%rand(1,150) =</span>
+</pre><p>We use Dirichlet boundary conditions for the density <img src="dTASEP_WASEP_eq11905270608999804013.png" alt="$\rho$" style="width:7px;height:10px;">; we also need the Cole-Hoft transformed version.</p><pre class="codeinput">rhoL = rho0(1);
+rhoR = rho0(X);
+robinL = -2-2*(2*rhoL-1)*deltax;
+robinR = -2+2*(2*rhoR-1)*deltax;
+</pre><p>Cole-hopf transform of the initial profile:</p><pre class="codeinput">u(1,:) = exp(cumsum(2*rho0-1)*deltax);
+
+x=2:(X-1); <span class="comment">% bulk</span>
+xm1=1:(X-2);
+xp1=3:X;
+</pre><h2 id="8">Solve the diffusion equation for `u`.</h2><pre class="codeinput"><span class="keyword">for</span> t=2:T
+    u(t,x) = u(t-1,x) + deltat * D(x) .* (( u(t-1,xm1) + u(t-1,xp1) - 2*u(t-1,x))/deltax^2 - u(t-1,x));
+    <span class="comment">% Robin boundary conditions:</span>
+    u(t,1) = u(t-1,1) + deltat * D(1) .* (( robinL*u(t-1, 1)  +      2*u(t-1,2))/deltax^2 - u(t-1,1));
+    u(t,X) = u(t-1,X) + deltat * D(X) .* ((      2*u(t-1,X-1) + robinR*u(t-1,X))/deltax^2 - u(t-1,X));
+<span class="comment">%    J(t,:) = rate_profile(x) .* (0.25 - 0.25*(u(t,xm1)+u(t,xp1)-2*u(t,x))/(2*deltax)./u(t,x));</span>
+<span class="keyword">end</span>
+
+
+
+figure(1)
+imagesc([0,100],[0,100],flipud(u));
+s = surf(u);
+s.EdgeColor = <span class="string">'none'</span>;
+zlabel(<span class="string">'$u$'</span>,<span class="string">'Interpreter'</span>,<span class="string">'latex'</span>)
+xlabel(<span class="string">'$x$'</span>,<span class="string">'Interpreter'</span>,<span class="string">'latex'</span>)
+ylabel(<span class="string">'$t$'</span>,<span class="string">'Interpreter'</span>,<span class="string">'latex'</span>)
+</pre><img vspace="5" hspace="5" src="dTASEP_WASEP_02.png" alt=""> <h2 id="9">Inverse Cole-Hopf transformation</h2><p>This finally retrieves the evolution of the height variable <img src="dTASEP_WASEP_eq08062630503172331818.png" alt="$h$" style="width:8px;height:11px;"> and the density profile <img src="dTASEP_WASEP_eq11905270608999804013.png" alt="$\rho$" style="width:7px;height:10px;">.</p><pre class="codeinput">h=log(u)*0.5;
+figure(2)
+s = surf(h);
+s.EdgeColor = <span class="string">'none'</span>;
+zlabel(<span class="string">'$h$'</span>,<span class="string">'Interpreter'</span>,<span class="string">'latex'</span>)
+xlabel(<span class="string">'$x$'</span>,<span class="string">'Interpreter'</span>,<span class="string">'latex'</span>)
+ylabel(<span class="string">'$t$'</span>,<span class="string">'Interpreter'</span>,<span class="string">'latex'</span>)
+
+
+
+<span class="comment">%hup1=[h(:,2:150), h(:,1)];</span>
+<span class="comment">%hum1=[h(:,150), h(:,1:149)];</span>
+<span class="comment">%rho=(hup1-hum1)/deltax + 0.5;</span>
+
+rho=zeros(T, X);
+<span class="comment">%bulk:</span>
+rho(:,x)=(h(:,xp1)-h(:,xm1))/(2*deltax)+0.5;
+<span class="comment">%boundaries:</span>
+rho(:,1)=rhoL;
+rho(:,X)=rhoR;
+
+figure(3)
+s = surf(rho);
+s.EdgeColor = <span class="string">'none'</span>;
+zlabel(<span class="string">'$\rho$'</span>,<span class="string">'Interpreter'</span>,<span class="string">'latex'</span>)
+xlabel(<span class="string">'$x$'</span>,<span class="string">'Interpreter'</span>,<span class="string">'latex'</span>)
+ylabel(<span class="string">'$t$'</span>,<span class="string">'Interpreter'</span>,<span class="string">'latex'</span>)
+</pre><img vspace="5" hspace="5" src="dTASEP_WASEP_03.png" alt=""> <img vspace="5" hspace="5" src="dTASEP_WASEP_04.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+
+%% dTASEP-WASEP 
+% In these notes we integrate the mean-field hydronamics limit of
+% a weakly asymmetric simple exclusion process dTASEP-WASEP with position-dependent rates.
+
+%% Define physical and numerical parameters.
+X=150;
+deltat=0.002;
+deltax=0.05;
+T=1000;
+
+%% Model parameters.
+rate_profile = [repelem(0.9048, 25),exp(0.1*sin(linspace(-pi/2,-pi/2 + 6 * pi,100))), repelem(0.9048, 25)] - 0.1; %linspace(3,4,150)
+% rate_profile = cumsum([repelem(0.9048, 25),exp(sin(linspace(-pi/2,-pi/2 + 6 * pi,100))), repelem(0.9048, 25)]) * 0.01 +3;
+figure(10)
+plot(rate_profile)
+title('rate profile')
+xlabel('$x$', 'Interpreter','latex')
+
+
+D = 0.5 * rate_profile;
+% D = repelem(1, 150);
+
+%% Check stability of numerical scheme
+% The numerical scheme we are going to use is stable everywhere in the bulk if
+% `max(D(x))*deltat/deltax^2` is less than $0.5$.
+
+fprintf("%f\n", max(D(2:(X-1)))*deltat/deltax^2);
+
+%% Set up workspace variables and initial/boundary conditions
+u = zeros(T,X);
+J = zeros(T,X-2);
+rho0 = [repelem(1,50), repelem(0,100)]; %rand(1,150) = 
+
+%%
+% We use Dirichlet boundary conditions for the density $\rho$; we also need
+% the Cole-Hoft transformed version.
+
+rhoL = rho0(1);
+rhoR = rho0(X);
+robinL = -2-2*(2*rhoL-1)*deltax;
+robinR = -2+2*(2*rhoR-1)*deltax;
+
+%%
+% Cole-hopf transform of the initial profile:
+u(1,:) = exp(cumsum(2*rho0-1)*deltax);
+
+x=2:(X-1); % bulk
+xm1=1:(X-2);
+xp1=3:X;
+
+%% Solve the diffusion equation for `u`.
+
+for t=2:T
+    u(t,x) = u(t-1,x) + deltat * D(x) .* (( u(t-1,xm1) + u(t-1,xp1) - 2*u(t-1,x))/deltax^2 - u(t-1,x));
+    % Robin boundary conditions:
+    u(t,1) = u(t-1,1) + deltat * D(1) .* (( robinL*u(t-1, 1)  +      2*u(t-1,2))/deltax^2 - u(t-1,1));
+    u(t,X) = u(t-1,X) + deltat * D(X) .* ((      2*u(t-1,X-1) + robinR*u(t-1,X))/deltax^2 - u(t-1,X));
+%    J(t,:) = rate_profile(x) .* (0.25 - 0.25*(u(t,xm1)+u(t,xp1)-2*u(t,x))/(2*deltax)./u(t,x));
+end
+
+
+
+figure(1)
+imagesc([0,100],[0,100],flipud(u));
+s = surf(u);
+s.EdgeColor = 'none';
+zlabel('$u$','Interpreter','latex')
+xlabel('$x$','Interpreter','latex')
+ylabel('$t$','Interpreter','latex')
+
+%% Inverse Cole-Hopf transformation
+% This finally retrieves the evolution of the height
+% variable $h$ and the density profile $\rho$.
+h=log(u)*0.5;
+figure(2)
+s = surf(h);
+s.EdgeColor = 'none';
+zlabel('$h$','Interpreter','latex')
+xlabel('$x$','Interpreter','latex')
+ylabel('$t$','Interpreter','latex')
+
+
+
+%hup1=[h(:,2:150), h(:,1)];
+%hum1=[h(:,150), h(:,1:149)];
+%rho=(hup1-hum1)/deltax + 0.5;
+
+rho=zeros(T, X);
+%bulk:
+rho(:,x)=(h(:,xp1)-h(:,xm1))/(2*deltax)+0.5;
+%boundaries:
+rho(:,1)=rhoL;
+rho(:,X)=rhoR;
+
+figure(3)
+s = surf(rho);
+s.EdgeColor = 'none';
+zlabel('$\rho$','Interpreter','latex')
+xlabel('$x$','Interpreter','latex')
+ylabel('$t$','Interpreter','latex')
+
+##### SOURCE END #####
+--></body></html>
